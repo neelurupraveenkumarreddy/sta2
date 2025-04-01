@@ -1,0 +1,629 @@
+import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
+import Papa from 'papaparse';
+import './index.css';
+import Header from '../Header';
+
+import Cookies from "js-cookie"; // Ensure you have installed js-cookie
+
+class ExamSeating extends Component {
+  state = {
+    // Files and parsed students
+    file: null,
+    file2: null,
+    students: [],
+    students2: [],
+    // Room data and selection
+    rooms: [],
+    selectedRooms: [],
+    roomsTotalSeats: 0,
+    // Exam and branch info
+    examDatetime: '',
+    branch: '',       // Used in single file mode (comma separated)
+    branch1: '',      // Used in double file mode (for file1)
+    branch2: '',      // Used in double file mode (for file2)
+    // Allotment map (room_number: 2D seating arrangement)
+    allotment: {},
+    error: '',
+    apiRoomStatus: 'inpro',
+    // New options:
+    allotmentDirection: 'row',    // Options: "row", "column", "checkerboard-row", "checkerboard-column"
+    uploadMode: 'single',         // Options: "single", "double"
+    fileUploadResponse1: '',      // Response message for file1
+    fileUploadResponse2: '',      // Response message for file2
+    fillRoomFirst: false,
+    allotmentSuccess:false,          // Applicable when using "checkerboard-column"
+  };
+
+  componentDidMount() {
+    this.fetchRooms();
+  }
+
+  fetchRooms = async () => {
+    try {
+      const response = await fetch('/api/rooms');
+      const data = await response.json();
+      if (response.ok) {
+        this.setState({ rooms: data.data, apiRoomStatus: 'suc' });
+      } else {
+        throw new Error(data.message || 'Failed to fetch rooms');
+      }
+    } catch (error) {
+      this.setState({ error: error.message });
+    }
+  };
+
+  // Handle file changes for single upload
+  handleFileChange = (e) => {
+    this.setState({ file: e.target.files[0] });
+  };
+
+  // Handle file changes for second file in double mode
+  handleFileChange2 = (e) => {
+    this.setState({ file2: e.target.files[0] });
+  };
+
+  // Parse CSV for file1 using the "rollno" header
+  handleFileUpload = () => {
+    const { file } = this.state;
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        complete: (result) => {
+          const students = result.data
+            .map((row) => row.rollno)
+            .filter((roll) => roll && roll.trim() !== '');
+          console.log("Parsed Students (File 1):", students);
+          this.setState({ 
+            students, 
+            fileUploadResponse1: 'File 1 uploaded and parsed successfully.' 
+          });
+        },
+        error: (error) => {
+          this.setState({ error: error.message });
+        }
+      });
+    }
+  };
+
+  // Parse CSV for file2 (for double mode) using the "rollno" header
+  handleFileUpload2 = () => {
+    const { file2 } = this.state;
+    if (file2) {
+      Papa.parse(file2, {
+        header: true,
+        complete: (result) => {
+          const students2 = result.data
+            .map((row) => row.rollno)
+            .filter((roll) => roll && roll.trim() !== '');
+          console.log("Parsed Students (File 2):", students2);
+          this.setState({ 
+            students2, 
+            fileUploadResponse2: 'File 2 uploaded and parsed successfully.' 
+          });
+        },
+        error: (error) => {
+          this.setState({ error: error.message });
+        }
+      });
+    }
+  };
+
+  handleRoomSelect = (e) => {
+    const { rooms, selectedRooms } = this.state;
+    const selectedRoomNo = e.target.value;
+    const selectedRoom = rooms.find((room) => room.room_number === selectedRoomNo);
+    if (!selectedRoom) return;
+    const seatsAvailable = selectedRoom.rows * selectedRoom.columns;
+    if (!e.target.checked) {
+      const updatedRooms = selectedRooms.filter((rm) => rm.room_number !== selectedRoomNo);
+      this.setState((prevState) => ({
+        selectedRooms: updatedRooms,
+        roomsTotalSeats: prevState.roomsTotalSeats - seatsAvailable,
+      }));
+    } else {
+      this.setState((prevState) => ({
+        selectedRooms: [...prevState.selectedRooms, selectedRoom],
+        roomsTotalSeats: prevState.roomsTotalSeats + seatsAvailable,
+      }));
+    }
+  };
+
+  // Helper: Merge two arrays alternately (used for non-checkerboard in double mode)
+  mergeAlternating = (arr1, arr2) => {
+    const maxLength = Math.max(arr1.length, arr2.length);
+    const merged = [];
+    for (let i = 0; i < maxLength; i++) {
+      if (i < arr1.length) merged.push(arr1[i]);
+      if (i < arr2.length) merged.push(arr2[i]);
+    }
+    return merged;
+  };
+
+  createAllotment = () => {
+    const { selectedRooms, allotmentDirection, uploadMode, students, students2, fillRoomFirst } = this.state;
+    let newAllotment = {};
+
+    // Checkerboard allotment options
+    if (allotmentDirection.startsWith("checkerboard")) {
+      const variant = allotmentDirection.split("-")[1]; // "row" or "column"
+      if (variant === "row") {
+        // Checkerboard alternate branch using row-wise traversal (global indices)
+        let globalIndex1 = 0;
+        let globalIndex2 = 0;
+        selectedRooms.forEach((room) => {
+          const { rows, columns, room_number, unavialable_positions = [] } = room;
+          let roomSeats = Array.from({ length: rows }, () => Array(columns).fill(null));
+          for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < columns; j++) {
+              if (unavialable_positions.some((pos) => pos.row === i + 1 && pos.column === j + 1)) {
+                roomSeats[i][j] = null;
+              } else {
+                // Alternate assignment based on (i+j) even or odd.
+                if ((i + j) % 2 === 0) {
+                  if (globalIndex1 < students.length) {
+                    roomSeats[i][j] = students[globalIndex1++];
+                  } else if (globalIndex2 < students2.length) {
+                    roomSeats[i][j] = students2[globalIndex2++];
+                  }
+                } else {
+                  if (globalIndex2 < students2.length) {
+                    roomSeats[i][j] = students2[globalIndex2++];
+                  } else if (globalIndex1 < students.length) {
+                    roomSeats[i][j] = students[globalIndex1++];
+                  }
+                }
+              }
+            }
+          }
+          newAllotment[room_number] = roomSeats;
+        });
+      } else if (variant === "column") {
+        // Checkerboard alternate branch using column-wise traversal.
+        if (!fillRoomFirst) {
+          // Global assignment across rooms.
+          let globalIndex1 = 0;
+          let globalIndex2 = 0;
+          selectedRooms.forEach((room) => {
+            const { rows, columns, room_number, unavialable_positions = [] } = room;
+            let roomSeats = Array.from({ length: rows }, () => Array(columns).fill(null));
+            for (let j = 0; j < columns; j++) {
+              for (let i = 0; i < rows; i++) {
+                if (unavialable_positions.some((pos) => pos.row === i + 1 && pos.column === j + 1)) {
+                  roomSeats[i][j] = null;
+                } else {
+                  // Alternate assignment based on (i+j) even or odd.
+                  if ((i + j) % 2 === 0) {
+                    if (globalIndex1 < students.length) {
+                      roomSeats[i][j] = students[globalIndex1++];
+                    } else if (globalIndex2 < students2.length) {
+                      roomSeats[i][j] = students2[globalIndex2++];
+                    }
+                  } else {
+                    if (globalIndex2 < students2.length) {
+                      roomSeats[i][j] = students2[globalIndex2++];
+                    } else if (globalIndex1 < students.length) {
+                      roomSeats[i][j] = students[globalIndex1++];
+                    }
+                  }
+                }
+              }
+            }
+            newAllotment[room_number] = roomSeats;
+          });
+        } else {
+          // Fill room completely before moving to next room (local assignment)
+          let localStudents1 = [...students];
+          let localStudents2 = [...students2];
+          selectedRooms.forEach((room) => {
+            const { rows, columns, room_number, unavialable_positions = [] } = room;
+            let roomSeats = Array.from({ length: rows }, () => Array(columns).fill(null));
+            // Column-wise traversal per room
+            for (let j = 0; j < columns; j++) {
+              for (let i = 0; i < rows; i++) {
+                if (unavialable_positions.some((pos) => pos.row === i + 1 && pos.column === j + 1)) {
+                  roomSeats[i][j] = null;
+                } else {
+                  // Alternate assignment based on (i+j) even or odd.
+                  if ((i + j) % 2 === 0) {
+                    if (localStudents1.length > 0) {
+                      roomSeats[i][j] = localStudents1.shift();
+                    } else if (localStudents2.length > 0) {
+                      roomSeats[i][j] = localStudents2.shift();
+                    }
+                  } else {
+                    if (localStudents2.length > 0) {
+                      roomSeats[i][j] = localStudents2.shift();
+                    } else if (localStudents1.length > 0) {
+                      roomSeats[i][j] = localStudents1.shift();
+                    }
+                  }
+                }
+              }
+            }
+            newAllotment[room_number] = roomSeats;
+          });
+        }
+      }
+    } else {
+      // For standard row or column allotment
+      let studentArray =
+        uploadMode === "double"
+          ? this.mergeAlternating(students, students2)
+          : students;
+      let globalIndex = 0;
+
+      selectedRooms.forEach((room) => {
+        const { rows, columns, room_number, unavialable_positions = [] } = room;
+        let roomSeats = Array.from({ length: rows }, () => Array(columns).fill(null));
+
+        if (allotmentDirection === "row") {
+          for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < columns; j++) {
+              if (unavialable_positions.some((pos) => pos.row === i + 1 && pos.column === j + 1)) {
+                roomSeats[i][j] = null;
+              } else if (globalIndex < studentArray.length) {
+                roomSeats[i][j] = studentArray[globalIndex++];
+              }
+            }
+          }
+        } else if (allotmentDirection === "column") {
+          for (let j = 0; j < columns; j++) {
+            for (let i = 0; i < rows; i++) {
+              if (unavialable_positions.some((pos) => pos.row === i + 1 && pos.column === j + 1)) {
+                roomSeats[i][j] = null;
+              } else if (globalIndex < studentArray.length) {
+                roomSeats[i][j] = studentArray[globalIndex++];
+              }
+            }
+          }
+        }
+        newAllotment[room_number] = roomSeats;
+      });
+    }
+
+    console.log("Generated Allotment:", newAllotment);
+    this.setState({ allotment: newAllotment });
+  };
+handleSubmit = async () => {
+    const { examDatetime, branch, branch1, branch2, selectedRooms, allotment, uploadMode } = this.state;
+
+    if (
+        !examDatetime ||
+        (uploadMode === "single" && !branch) ||
+        (uploadMode === "double" && (!branch1 || !branch2)) ||
+        selectedRooms.length === 0 ||
+        Object.keys(allotment).length === 0
+    ) {
+        this.setState({ error: "Missing required fields." });
+        return;
+    }
+
+    // Determine branch array based on upload mode
+    const students_branches =
+        uploadMode === "double"
+            ? [branch1.trim(), branch2.trim()]
+            : branch.split(",").map((b) => b.trim());
+
+    const roomNumbers = selectedRooms.map((room) => room.room_number);
+    const localDate = new Date(examDatetime);
+    const correctedDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+
+    const payload = {
+        exam_datetime: correctedDate,
+        students_branches,
+        room_no: roomNumbers,
+        allotment: {},
+        unavialable_positions: {},
+    };
+
+    // For each selected room, add its seating allotment and unavailable positions
+    selectedRooms.forEach((room) => {
+        const rn = room.room_number;
+        payload.allotment[rn] = allotment[rn] || [];
+        payload.unavialable_positions[rn] = room.unavialable_positions || [];
+    });
+
+    try {
+        const token = Cookies.get("jwt_token"); // Retrieve JWT token
+
+        const response = await fetch("/api/allotments", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`, // Add JWT token to Authorization header
+            },
+            body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+            throw new Error("Failed to submit allotment");
+        }
+
+        const resData = await response.json();
+        console.log("Allotment successful:", resData);
+        alert("Successfully created allotment!");
+
+        this.setState({
+            file: null,
+            file2: null,
+            students: [],
+            students2: [],
+            rooms: [],
+            selectedRooms: [],
+            roomsTotalSeats: 0,
+            examDatetime: "",
+            branch: "",
+            branch1: "",
+            branch2: "",
+            allotment: {},
+            error: "",
+            apiRoomStatus: "inpro",
+            allotmentDirection: "row",
+            uploadMode: "single",
+            fileUploadResponse1: "",
+            fileUploadResponse2: "",
+            fillRoomFirst: false,
+            allotmentSuccess: false,
+        });
+    } catch (error) {
+        this.setState({ error: error.message });
+    }
+};
+
+
+  renderRooms = () => {
+    const { rooms } = this.state;
+    return (
+      <div>
+        <h1>Select Room:</h1>
+        <ul className="room-list">
+          {rooms.map((room) => (
+            <li key={room._id} className="room-item">
+              <input id={room._id} value={room.room_number} type="checkbox" onChange={this.handleRoomSelect} />
+              <label htmlFor={room._id}>
+                {room.room_number} ({room.building_name})
+              </label>
+              <p>Total Seats: {room.rows * room.columns}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
+  renderNav = () => {
+    return (
+      <div className="homeNavBar">
+        <img src="../../images/jntuaceatp.webp" alt="jntua-img" className="navLogo" />
+        <ul type="none" className="navElements">
+          <Link to="/" className="custom-link">
+            <li>Home</li>
+          </Link>
+          <Link to="/rooms" className="custom-link">
+            <li>Rooms</li>
+          </Link>
+          <Link to="/examseating" className="custom-link">
+            <li>Allotment</li>
+          </Link>
+          <li>Login</li>
+        </ul>
+      </div>
+    );
+  };
+  renderOut = () => {
+    const { allotment} = this.state;
+    return (
+      <div>
+        {Object.keys(allotment).map((roomNumber) => (
+          <div key={roomNumber} className="room-allotment">
+            <h3>Room: {roomNumber}</h3>
+            <table className="seating-table">
+              <tbody>
+                {allotment[roomNumber].map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {row.map((seat, seatIndex) => {
+                      return (
+                        <td key={seatIndex} className="allotment-seat-cell">
+                          {seat}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ))}
+      </div>
+    );
+  };
+  
+  render() {
+    const {
+      students,
+      allotment,
+      error,
+      examDatetime,
+      branch,
+      branch1,
+      branch2,
+      apiRoomStatus,
+      selectedRooms,
+      allotmentDirection,
+      uploadMode,
+      fileUploadResponse1,
+      fileUploadResponse2,
+      fillRoomFirst
+    } = this.state;
+    console.log("Selected Rooms:", selectedRooms);
+    return (
+      <>
+        <Header/>
+        <div className="AllotmentCon">
+          <h2 className="header">Exam Seating Arrangement</h2>
+          {error && <p className="error">{error}</p>}
+  
+          {/* Upload Mode Selection */}
+          <div className="section upload-mode">
+            <h3>Select Upload Mode:</h3>
+            <label>
+              <input
+                type="radio"
+                name="uploadMode"
+                value="single"
+                checked={uploadMode === "single"}
+                onChange={(e) => this.setState({ uploadMode: e.target.value })}
+              /> Single File
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="uploadMode"
+                value="double"
+                checked={uploadMode === "double"}
+                onChange={(e) => this.setState({ uploadMode: e.target.value })}
+              /> Two Files
+            </label>
+          </div>
+  
+          {/* File Upload Section */}
+          <div className="section file-upload">
+            <h3>Upload CSV File{uploadMode === "double" ? "s" : ""}</h3>
+            {uploadMode === "single" ? (
+              <>
+                <input type="file" accept=".csv" onChange={this.handleFileChange} />
+                <button className="btn" onClick={this.handleFileUpload}>Upload</button>
+                {fileUploadResponse1 && <p>{fileUploadResponse1}</p>}
+              </>
+            ) : (
+              <>
+                <div>
+                  <label>File for Branch 1:</label>
+                  <input type="file" accept=".csv" onChange={this.handleFileChange} />
+                  <button className="btn" onClick={this.handleFileUpload}>Upload Branch 1</button>
+                  {fileUploadResponse1 && <p>{fileUploadResponse1}</p>}
+                </div>
+                <div>
+                  <label>File for Branch 2:</label>
+                  <input type="file" accept=".csv" onChange={this.handleFileChange2} />
+                  <button className="btn" onClick={this.handleFileUpload2}>Upload Branch 2</button>
+                  {fileUploadResponse2 && <p>{fileUploadResponse2}</p>}
+                </div>
+              </>
+            )}
+          </div>
+  
+          {/* Branch Input */}
+          {uploadMode === "double" ? (
+            <div className="section">
+              <label className="input-field">
+                Branch for File 1:
+                <input type="text" value={branch1} onChange={(e) => this.setState({ branch1: e.target.value })} placeholder="e.g. CSE" />
+              </label>
+              <label className="input-field">
+                Branch for File 2:
+                <input type="text" value={branch2} onChange={(e) => this.setState({ branch2: e.target.value })} placeholder="e.g. ECE" />
+              </label>
+            </div>
+          ) : (
+            <div className="section">
+              <label className="input-field">
+                Student Branches (comma separated):
+                <input type="text" value={branch} onChange={(e) => this.setState({ branch: e.target.value })} placeholder="e.g. CSE,ECE" />
+              </label>
+            </div>
+          )}
+  
+          {/* Exam Date & Time */}
+          <div className="section">
+            <label className="input-field">
+              Exam Date & Time:
+              <input type="datetime-local" value={examDatetime} onChange={(e) => this.setState({ examDatetime: e.target.value })} />
+            </label>
+          </div>
+  
+          {/* Allotment Direction Selection */}
+          <div className="section allotment-type">
+            <h3>Select Allotment Direction:</h3>
+            <label>
+              <input
+                type="radio"
+                name="allotmentDirection"
+                value="row"
+                checked={allotmentDirection === "row"}
+                onChange={(e) => this.setState({ allotmentDirection: e.target.value })}
+              /> Row-wise
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="allotmentDirection"
+                value="column"
+                checked={allotmentDirection === "column"}
+                onChange={(e) => this.setState({ allotmentDirection: e.target.value })}
+              /> Column-wise
+            </label>
+            {uploadMode === "double" && (
+              <>
+                <label>
+                  <input
+                    type="radio"
+                    name="allotmentDirection"
+                    value="checkerboard-row"
+                    checked={allotmentDirection === "checkerboard-row"}
+                    onChange={(e) => this.setState({ allotmentDirection: e.target.value })}
+                  /> Checkerboard Alternate Branch (Row-wise)
+                </label>
+                <label>
+                  <input
+                    type="radio"
+                    name="allotmentDirection"
+                    value="checkerboard-column"
+                    checked={allotmentDirection === "checkerboard-column"}
+                    onChange={(e) => this.setState({ allotmentDirection: e.target.value })}
+                  /> Checkerboard Alternate Branch (Column-wise)
+                </label>
+              </>
+            )}
+          </div>
+  
+          {/* Option for filling room first in checkerboard column-wise */}
+          {allotmentDirection === "checkerboard-column" && (
+            <div className="section">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={fillRoomFirst}
+                  onChange={(e) => this.setState({ fillRoomFirst: e.target.checked })}
+                />
+                Fill room completely before moving to next room
+              </label>
+            </div>
+          )}
+  
+          {apiRoomStatus && <>{this.renderRooms()}</>}
+  
+          <div className="section">
+            <button className="btn generate" onClick={this.createAllotment}>Generate Allotment</button>
+          </div>
+  
+          <div className="section allotment-preview">
+            <h3>Allotment Preview</h3>
+            <pre>{JSON.stringify(allotment, null, 2)}</pre>
+            <div>{this.renderOut()}</div>
+          </div>
+  
+          <div className="section">
+            <button className="btn submit" onClick={this.handleSubmit}>Submit Allotment</button>
+          </div>
+        </div>
+        <Link to="/" className="room-item-p">
+          <button>Back</button>
+        </Link>
+      </>
+    );
+  }
+}
+
+export default ExamSeating;

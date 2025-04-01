@@ -1,0 +1,153 @@
+.seating-table {
+    border-collapse: collapse;
+    margin: 20px auto;
+  }
+  .seat-cell {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+    width: 60px;
+    height: 60px;
+    border-style: solid;
+    border-radius:5px;
+    border-width:2px;
+    border-color:#3d4743;
+    background-color: #3d4743;
+    color:white;
+  }
+  .your-seat-cell{
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+    width: 60px;
+    height: 60px;
+    border-style: solid;
+    border-radius:5px;
+    border-width:2px;
+    background-color:#4ff2f7;
+    color:black;
+  }
+  /* Navigation Bar */
+.homeNavBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #004080; /* dark blue background */
+  padding: 10px 20px;
+  color: #fff;
+}
+
+.navLogo {
+  height: 50px;
+}
+
+.navElements {
+  list-style: none;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  color:white;
+}
+.custom-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.navElements li {
+  margin-left: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+
+.navElements li:hover {
+  color: #ffcc00; /* highlight color on hover */
+}
+
+/* Home Body & Form */
+.homeBody {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  text-align: center;
+  border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.homeBody h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.homeBody p {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.studentForm {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.studentForm .inputs {
+  margin-bottom: 15px;
+  width: 100%;
+  max-width: 400px;
+  text-align: left;
+}
+
+.studentForm label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.studentForm input {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.studentForm button {
+  padding: 10px 20px;
+  font-size: 1rem;
+  background-color: #004080;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.studentForm button:hover {
+  background-color: #0059b3;
+}
+
+/* Home Footer */
+.homeFooter {
+  background-color: #f8f8f8;
+  padding: 20px;
+  text-align: center;
+}
+
+.homeFooter h1 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+}
+
+.homeFooter ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.homeFooter ul li {
+  font-size: 1rem;
+  color: #333;
+  margin-bottom: 5px;
+}

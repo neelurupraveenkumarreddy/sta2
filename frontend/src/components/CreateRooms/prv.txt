@@ -1,0 +1,146 @@
+import {Component} from 'react'
+
+import './CreateRooms.css'
+
+class CreateRooms extends Component{
+    state={
+        availableRooms:[],
+        apiRoomStatus:'inpro',
+        apiUploadRoomStatus:'',
+        error:'',
+        room_number: "",
+        rows: 0,
+        columns: 0,
+        building_name: "",
+        unavailable_positions: [
+          { row: 0, column: 0},
+          { row: 0, column: 0},
+        ]
+    }
+    
+    componentDidMount(){
+        this.fetchRooms();
+    }
+    
+    fetchRooms = async () => {
+        try {
+          const response = await fetch('/api/rooms');
+          const data = await response.json();
+          if (response.ok) {
+            this.setState({ availablerooms: data.data, apiRoomStatus: 'suc' });
+          } else {
+            throw new Error(data.message || 'Failed to fetch rooms');
+          }
+        } catch (error) {
+          this.setState({ error: error.message });
+        }
+    };
+    
+    deleteRoom=(id)=>{
+        console.log("delete request made.");
+    }
+    handleChange = (e) => {
+        const { name, value } = e.target;
+        this.setState({ [name]: value });
+      };
+    
+      handlePositionChange = (index, field, value) => {
+        const updatedPositions = this.state.unavailable_positions.map((pos, i) =>
+          i === index ? { ...pos, [field]: value } : pos
+        );
+        this.setState({ unavailable_positions: updatedPositions });
+      };
+    
+      addPosition = () => {
+        this.setState((prevState) => ({
+          unavailable_positions: [...prevState.unavailable_positions, { row: "", column: "" }],
+        }));
+      };
+    
+      removePosition = (index) => {
+        this.setState((prevState) => ({
+          unavailable_positions: prevState.unavailable_positions.filter((_, i) => i !== index),
+        }));
+      };
+    
+      handleSubmit = async (e) => {
+        e.preventDefault();
+        const {room_number,rows,columns,building_name,unavailable_positions}=this.state
+        const payload={
+            room_number,
+            rows,
+            columns,
+            building_name,
+            unavailable_positions
+        }
+        try {
+          const response = await fetch("/api/players", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          if (response.ok) {
+            alert("Room data submitted successfully!");
+          } else {
+            alert("Failed to submit data");
+          }
+        } catch (error) {
+          console.error("Error submitting data:", error);
+        }
+      };
+    renderFormCreateRooms = () => {
+        const {room_number,rows,columns,building_name,unavailable_positions}=this.state
+       return (
+        <form onSubmit={this.handleSubmit} className="p-4 border rounded shadow-md max-w-md mx-auto">
+        <label>Room Number</label>
+        <input name="room_number" value={room_number} onChange={this.handleChange} required />
+
+        <label>Rows</label>
+        <input type="number" name="rows" value={rows} onChange={this.handleChange} required />
+
+        <label>Columns</label>
+        <input type="number" name="columns" value={columns} onChange={this.handleChange} required />
+
+        <label>Building Name</label>
+        <input name="building_name" value={building_name} onChange={this.handleChange} required />
+
+        <label>Unavailable Positions</label>
+        {unavailable_positions.map((pos, index) => (
+          <div key={index} className="flex gap-2 items-center">
+            <input type="number" value={pos.row} onChange={(e) => this.handlePositionChange(index, "row", e.target.value)} placeholder="Row" required />
+            <input type="number" value={pos.column} onChange={(e) => this.handlePositionChange(index, "column", e.target.value)} placeholder="Column" required />
+            <button type="button" onClick={() => this.removePosition(index)} className="text-red-500">Remove</button>
+          </div>
+        ))}
+        <button type="button" onClick={this.addPosition} className="mt-2">Add Position</button>
+
+        <button type="submit" className="mt-4 w-full">Submit</button>
+      </form>
+       )
+    }
+    renderRooms=()=>{
+      const  {availableRooms}=this.state
+        return (
+        <div>
+        <h1>Select Room:</h1>
+        <ul className="room-list">
+          {availableRooms.map((room) => (
+            <li key={room._id} className="room-item">
+              <input id={room._id} value={room.room_number} type="checkbox" onChange={this.handleRoomSelect} />
+              <label htmlFor={room._id}>{room.room_number} ({room.building_name})</label>
+              <p>Total Seats: {room.rows * room.columns}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+    }
+    render (){
+        return <div>
+            {this.renderFormCreateRooms()}
+            {this.renderRooms()}
+        </div>
+    }
+}
+
+export default CreateRooms

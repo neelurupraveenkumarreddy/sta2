@@ -1,0 +1,56 @@
+/* Container */
+.print-allotment__container {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Title */
+  .print-allotment__title {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  
+  /* Table styles */
+  .print-allotment__table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .print-allotment__thead {
+    background-color: #f2f2f2;
+  }
+  
+  .print-allotment__th,
+  .print-allotment__td {
+    border: 1px solid #ddd;
+    text-align: left;
+    padding: 8px;
+  }
+  
+  /* Row hover effect */
+  .print-allotment__tr:hover {
+    background-color: #f9f9f9;
+  }
+  
+  /* Checkbox */
+  .print-allotment__checkbox {
+    transform: scale(1.2);
+  }
+  
+  /* Button */
+  .print-allotment__btn {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .print-allotment__btn:hover {
+    background-color: #0056b3;
+  }
+  
