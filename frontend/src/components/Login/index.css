@@ -91,4 +91,9 @@
   .login-page login-a:hover {
     text-decoration: underline;
   }
-  
+  .ForBgImg{
+    background-image: url('../../images/exam_hall.jpeg');
+    background-size: cover;
+    height:100vh;
+    width:100%;
+  }

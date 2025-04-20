@@ -8,7 +8,7 @@ class Home extends Component{
         rollno:"",
         date: new Date().toISOString().slice(0, 16),
         apiResp:{},
-        apiStatus:'inpro',
+        apiStatus:'init',
         allAllotments:[],
         apiAllStatus:"inpro",
         jwtToken:Cookies.get('jwt_token')
@@ -66,14 +66,14 @@ class Home extends Component{
         const {allotment}=apiResp
         return (
             <>
-            <div>
+            <div >
                 <ul>
                 <table className="seating-table">
-                    <tbody>
+                    <tbody className='forDisplay'>
                         {Object.keys(allotment).map((roomNumber) => (
                             <div key={roomNumber} className="room-allotment">
                               <h3>Room: {roomNumber}</h3>
-                              <table>
+                              <table >
                                 <tbody>
                                   {allotment[roomNumber].map((row, rowIndex) => (
                                     <tr key={rowIndex}>
@@ -104,12 +104,47 @@ class Home extends Component{
     changeDate=(event)=>{
         this.setState({date:event.target.value})
     }
+    formatDateTime=(isoDateStr)=> {
+        const [datePart, timePart] = isoDateStr.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute] = timePart.split(':').map(Number);
+
+  const date = new Date(year, month - 1, day, hour, minute);
+
+  const options = {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  };
+
+  const formattedDate = date.toLocaleString('en-IN', options);
+
+  // Split date and time cleanly to add "at"
+  const [dateStr, timeStr] = formattedDate.split(', ');
+  return `${dateStr}`;    
+    }
+    forLoding=()=>{
+        const {apiStatus}=this.state
+        switch (apiStatus){
+            case 'suc':
+                return <>{this.renderOut()}</>;
+            case 'fail':
+                return <><h1>Failed to get the data</h1></>;
+            case 'inpro':
+                return <>
+                <p>Loading...</p></>;
+            case 'init':
+                return <></>;
+        }
+    }
     renderHomeBody=()=>{
         const {apiStatus,rollno}=this.state
         return (
             <div className="homeBody">
-                <h1>Find Your Seat</h1>
-                <p>in Exams</p>
+                <h1>Find Your Seat In Exams</h1>
                 <form className='studentForm' onSubmit={this.getApiResp}>
                     <div className='inputs'>
                         <label htmlFor="rollno" >Roll No</label>
@@ -135,7 +170,8 @@ class Home extends Component{
                 <ul>
                     {
                         allAllotments.map(each=>(
-                            <li>{each.exam_datetime} {each.exam_name}</li>
+                            <li>{this.formatDateTime(each.exam_datetime)} ---
+                             {each.exam_name}</li>
                         ))
                     }
                 </ul>
@@ -145,11 +181,11 @@ class Home extends Component{
     render (){
         const {apiAllStatus}=this.state
         return (
-            <>
+            <div className='MainHomeBg'>
             <Header/>
             {this.renderHomeBody()}
             {apiAllStatus==='suc' && <>{this.renderHomeFooter()}</>}
-            </>
+            </div>
         )
     }
 

@@ -56,7 +56,7 @@ handleSubmit = async (e) => {
   render() {
     const { username, password, message, error } = this.state;
     return (
-      <>
+      <div className='ForBgImg'>
       <Header/>
       <div className="register-page">
         <h2>Admin Register</h2>
@@ -90,7 +90,7 @@ handleSubmit = async (e) => {
           <button type="submit" className='Register-button'>Register</button>
         </form>
       </div>
-      </>
+      </div>
     );
   }
 }

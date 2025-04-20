@@ -1,6 +1,17 @@
 .seating-table {
     border-collapse: collapse;
-    margin: 20px auto;
+  }
+  .forDisplay{
+    display: flex;
+    flex-direction: row;
+    flex-wrap:wrap;
+  }
+  .MainHomeBg{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height:100vh;
+    color:white
   }
   .seat-cell {
     border: 1px solid #ccc;
@@ -14,6 +25,9 @@
     border-color:#3d4743;
     background-color: #3d4743;
     color:white;
+  }
+  .room-allotment{
+    margin:10px;
   }
   .your-seat-cell{
     border: 1px solid #ccc;
@@ -66,13 +80,11 @@
 
 /* Home Body & Form */
 .homeBody {
-  max-width: 800px;
-  margin: 20px auto;
-  padding: 20px;
+  width:100vw;
+  height:100%;
   text-align: center;
-  border: 1px solid #ccc;
-    border-radius: 8px;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+  background-image: url('../../images/exam_hall.jpeg');
+  background-size: cover;
 }
 
 .homeBody h1 {
@@ -80,11 +92,7 @@
   margin-bottom: 10px;
 }
 
-.homeBody p {
-  font-size: 1.2rem;
-  color: #666;
-  margin-bottom: 20px;
-}
+
 
 .studentForm {
   display: flex;
@@ -130,7 +138,8 @@
 
 /* Home Footer */
 .homeFooter {
-  background-color: #f8f8f8;
+  background-color: #004080;
+  color:#ffffff;
   padding: 20px;
   text-align: center;
 }
@@ -148,6 +157,5 @@
 
 .homeFooter ul li {
   font-size: 1rem;
-  color: #333;
   margin-bottom: 5px;
 }

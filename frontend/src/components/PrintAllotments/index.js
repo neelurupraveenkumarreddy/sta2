@@ -70,7 +70,28 @@ class PrintAllotments extends Component {
     doc.setLineWidth(1);
     doc.rect(5, 5, pageWidth - 10, pageHeight - 10);
   };
+  formatDateTime=(isoDateStr)=> {
+    const [datePart, timePart] = isoDateStr.split('T');
+const [year, month, day] = datePart.split('-').map(Number);
+const [hour, minute] = timePart.split(':').map(Number);
 
+const date = new Date(year, month - 1, day, hour, minute);
+
+const options = {
+day: '2-digit',
+month: 'long',
+year: 'numeric',
+hour: '2-digit',
+minute: '2-digit',
+hour12: true,
+};
+
+const formattedDate = date.toLocaleString('en-IN', options);
+
+// Split date and time cleanly to add "at"
+const [dateStr, timeStr] = formattedDate.split(', ');
+return `${dateStr}`;    
+}
   // Make generatePDF asynchronous so we can await the image conversion.
   generatePDF = async () => {
     const { allotments, selected } = this.state;
@@ -110,7 +131,7 @@ class PrintAllotments extends Component {
   
       let y = logoHeight + 10; // Start below the logo
       doc.setFontSize(16);
-      doc.text(`Exam DateTime: ${new Date(allot.exam_datetime).toLocaleString()}`, 14, y);
+      doc.text(`Exam DateTime: ${this.formatDateTime(allot.exam_datetime)}`, 14, y);
       y += 10;
       doc.text(`Branches: ${allot.students_branches.join(', ')}`, 14, y);
       y += 10;
@@ -161,7 +182,7 @@ class PrintAllotments extends Component {
   render() {
     const { allotments, selected } = this.state;
     return (
-        <>
+        <div className='ForBgImg'>
         <Header/>
       <div className="print-allotment__container">
         <h1 className="print-allotment__title">Allotments</h1>
@@ -187,7 +208,7 @@ class PrintAllotments extends Component {
                 </td>
                 <td className="print-allotment__td">{allot.room_no.join(', ')}</td>
                 <td className="print-allotment__td">
-                  {new Date(allot.exam_datetime).toLocaleString()}
+                  {this.formatDateTime(allot.exam_datetime)}
                 </td>
                 <td className="print-allotment__td">{allot.students_branches.join(', ')}</td>
               </tr>
@@ -198,7 +219,7 @@ class PrintAllotments extends Component {
           Generate PDF
         </button>
       </div>
-      </>
+      </div>
     );
   }
 }

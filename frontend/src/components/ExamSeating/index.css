@@ -111,3 +111,9 @@
     height:50px;
     text-align: center;
   }
+  .ForBgImg2{
+    background-image: url('../../images/exam_hall.jpeg');
+      background-size: cover;
+      height:100%;
+      width:100%;
+  }

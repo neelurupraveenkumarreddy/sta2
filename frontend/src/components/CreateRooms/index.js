@@ -107,7 +107,7 @@ class CreateRooms extends Component {
     const { room_number, rows, columns, building_name, unavailable_positions } = this.state;
     return (
         <>
-        <h1>Create Room:</h1>
+        <h1 className='RoomsHead'>Create Room:</h1>
       <form onSubmit={this.handleSubmit} className="room-form">
         <label>Room Number</label>
         <input name="room_number" value={room_number} onChange={this.handleChange} required />
@@ -140,7 +140,7 @@ class CreateRooms extends Component {
     const { availableRooms } = this.state;
     return (
       <div className="room-container">
-        <h1>Available Rooms:</h1>
+        <h1 className='RoomsHead'>Available Rooms:</h1>
         <ul className="room-list">
         <li className="room-item">
               <p className='room-item-p'>roomNo & Building:</p>
@@ -162,13 +162,13 @@ class CreateRooms extends Component {
   };
   render() {
     return (
-        <><Header/>
+        <div className='ForBgImg2'><Header/>
       <div className="main-container">
         {this.renderFormCreateRooms()}
         {this.renderRooms()}
       </div>
       <Link to="/" className="room-item-p"><button>Back</button></Link>
-      </>
+      </div>
     );
   }
 }

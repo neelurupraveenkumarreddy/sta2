@@ -353,7 +353,7 @@ class ExamSeating extends Component {
   render() {
     const { numberOfFiles, fileUploadResponses,exam_name, examDatetime, allotment, error, allotmentDirection, unallottedStudents, branches } = this.state;
     return (
-      <>
+      <div className='ForBgImg2'>
         <Header />
         <div className="AllotmentCon">
           <h2 className="header">Exam Seating Arrangement</h2>
@@ -439,7 +439,7 @@ class ExamSeating extends Component {
         <Link to="/" className="room-item-p">
           <button>Back</button>
         </Link>
-      </>
+      </div>
     );
   }
 }

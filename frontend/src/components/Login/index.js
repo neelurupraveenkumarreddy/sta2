@@ -56,7 +56,7 @@ class Login extends Component {
     }
 
     return (
-      <>
+      <div className='ForBgImg'>
       <Header/>
       <div className="login-page">
         <h2>Admin Login</h2>
@@ -92,7 +92,7 @@ class Login extends Component {
           Not registered? <Link to="/register">Register here</Link>
         </p>
       </div>
-      </>
+      </div>
     );
   }
 }

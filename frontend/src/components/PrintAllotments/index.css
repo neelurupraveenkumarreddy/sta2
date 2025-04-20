@@ -8,6 +8,7 @@
   .print-allotment__title {
     text-align: center;
     margin-bottom: 20px;
+    color:white;
   }
   
   /* Table styles */
@@ -27,10 +28,14 @@
     text-align: left;
     padding: 8px;
   }
-  
+  .print-allotment__tr{
+    color:black;
+    background-color: white;
+  }
   /* Row hover effect */
   .print-allotment__tr:hover {
-    background-color: #f9f9f9;
+    background-color: black;
+    color:white;
   }
   
   /* Checkbox */
