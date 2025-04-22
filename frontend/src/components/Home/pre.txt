@@ -36,20 +36,7 @@ class Home extends Component{
     }
     getApiResp=async (event)=>{
         event.preventDefault()
-        const { date, allAllotments } = this.state
-        const matched = allAllotments.find(
-        each => new Date(each.exam_datetime).toISOString().slice(0,16) === date
-        )
-        if (!matched) {
-            alert("No Exam on the specified date!");
-        this.setState({
-            error: "No exam found for the entered date.",
-            apiStatus: 'fail'
-        })
-        return
-        }
-     // clear any prior error
-     this.setState({ error: '' })
+        const {date}=this.state
         const url='/api/allotments'
         const options={
             method:"GET",
@@ -77,11 +64,10 @@ class Home extends Component{
     }
     renderOut=()=>{
         const {apiResp,rollno}=this.state
-        const {allotment,building_name}=apiResp
+        const {allotment}=apiResp
         return (
             <>
             <div >
-                <h2>BUILDING:{building_name}</h2>
                 <ul>
                 <table className="seating-table">
                     <tbody className='forDisplay'>

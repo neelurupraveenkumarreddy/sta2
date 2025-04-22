@@ -9,6 +9,10 @@ const AllotmentSchema = new mongoose.Schema({
     type:String,
     required:true
   },
+  building_name: {
+    type: String,
+    required: true
+  },
   students_branches: {
     type: [String],
     required: true

@@ -259,10 +259,12 @@ class ExamSeating extends Component {
     const roomNumbers = selectedRooms.map(room => room.room_number);
     const localDate = new Date(examDatetime);
     const correctedDate = new Date(localDate.getTime() - localDate.getTimezoneOffset() * 60000);
+    const buildingName = selectedRooms[0]?.building_name || '';
     const payload = {
       exam_name:exam_name,
       exam_datetime: correctedDate,
       room_no: roomNumbers,
+      building_name:buildingName,
       students_branches: branches.map(b => b.trim()),
       allotment: {},
       unavialable_positions: {},
