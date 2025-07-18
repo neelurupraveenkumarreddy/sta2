@@ -4,7 +4,6 @@ A full-stack MERN application to automate exam seat allotments with dynamic mapp
 
 ## 🚀 Features
 - Room-wise seating with capacity management
-- Block specific seats or rows
 - Real-time seat layout updates
 - Secure admin panel for allotment control
 
@@ -14,10 +13,15 @@ A full-stack MERN application to automate exam seat allotments with dynamic mapp
 
 ## 🔧 Installation
 --bash
-- git clone https://github.com/yourusername/exam-seating-system
-- cd exam-seating-system
+- git clone https://github.com/neelurupraveenkumarreddy/sta2.git
+- To start frontend
+- cd frontend
 - npm install
-- cd client && npm install
+- npm start
+- To start backend
+- cd backend
+- npm install
+- node app.js
 
 ## Screenshots
 /home
