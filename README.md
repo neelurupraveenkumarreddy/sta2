@@ -21,7 +21,7 @@ A full-stack MERN application to automate exam seat allotments with dynamic mapp
 - To start backend
 - cd backend
 - npm install
-- node app.js
+- node server.js
 
 ## Screenshots
 /home
